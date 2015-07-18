@@ -1,0 +1,8 @@
+{
+  "name": "angular_amd",
+  "version": "1.0.0",
+  "dependencies": {
+    "requirejs": "2.1.x",
+    "angularjs": "1.4.x"
+  }
+}
