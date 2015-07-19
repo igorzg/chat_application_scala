@@ -23,7 +23,9 @@ define(function () {
      * @returns {T|*}
      */
     PackageManager.prototype.getPackage = function (name) {
-        return this.packages.filter(item => item.name === name).shift();
+        return this.packages.filter(function (item) {
+            return item.name === name;
+        }).shift();
     };
 
     /**
@@ -31,7 +33,9 @@ define(function () {
      * @param pckgs
      */
     function requireConfig(pckgs) {
-        var vendors = pckgs.filter(item => item.isVendor);
+        var vendors = pckgs.filter(function (item) {
+           return item.isVendor;
+        });
         var config = {
             paths: {},
             shim: {}

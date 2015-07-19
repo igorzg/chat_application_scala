@@ -1,8 +1,10 @@
 /**
  * Created by igi on 15/07/15.
  */
-define('ng-bootstrap', ['angularjs'], function (angular) {
-    var APP_NAME = 'amd',
+define('at-bootstrap', ['angularjs'], function (angular) {
+
+    var APP_NAME = 'atAmd',
+        pckgName = 'at-bootstrap',
         isBOOTSTRAPED = false,
         app,
         _$provide,
@@ -33,7 +35,6 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
     ]);
 
 
-
     api = {
         /**
          * Defome ,pdiöe
@@ -48,7 +49,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
          */
         bootstrap: function bootstrap(packageManager) {
             _packageManager = packageManager;
-            var pckg = api.getPackage('ng-bootstrap');
+            var pckg = api.getPackage(pckgName);
             require(pckg.deps, function () {
                 if (!isBOOTSTRAPED) {
                     angular.bootstrap(document, [APP_NAME]);
@@ -59,7 +60,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
             });
         },
         /**
-         * Define package
+         * Load package
          * @param name
          * @param callback
          */
@@ -86,6 +87,28 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
 
             window.define.apply(window.define, args);
         },
+
+        /**
+         * Require package
+         * @param name
+         * @param callback
+         */
+        require: function require(name, callback) {
+            var pckg = api.getPackage(name),
+                args = [];
+            args.push([pckg.name]);
+            args.push(function loadAll() {
+                Array.prototype.slice.call(arguments).forEach(function (item, index) {
+                    var name;
+                    if (!!item) {
+                        name = pckg.deps[index];
+                        _vendors[name] = item;
+                    }
+                });
+                callback();
+            });
+            window.require.apply(window.require, args);
+        },
         /**
          * Get package
          */
@@ -96,12 +119,50 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
             }
             return pckg;
         },
+
+        /**
+         * Get template
+         */
+        getController: function getController(name) {
+            var pckg = api.getPackage(name),
+                SNAKE_CASE_REGEXP = /-/g;
+
+            if (pckg.controller) {
+                return pckg.controller;
+            }
+
+            if (SNAKE_CASE_REGEXP.test(pckg.name)) {
+                return camelCase(pckg.name, SNAKE_CASE_REGEXP);
+            }
+
+            return pckg.name;
+            /**
+             * Snake case
+             * @param name
+             * @param separator
+             * @returns {*|void|string|XML}
+             */
+            function camelCase(name, separator) {
+                var split = name.split(separator),
+                    item,
+                    nName = "";
+                while (split.length) {
+                    item = split.shift();
+                    if (!nName) {
+                        nName += item;
+                    } else {
+                        nName += item.charAt(0).toUpperCase() + item.slice(1);
+                    }
+                }
+                return nName;
+            }
+        },
         /**
          * Get template
          */
         getTemplate: function getTemplate(name) {
             var pckg = api.getPackage(name);
-            return !!pckg && pckg.template ? pckg.filePath + pckg.template : false;
+            return !!pckg && !!pckg.tempalte ? pckg.filePath + pckg.tempalte : false;
         },
         /**
          * Return vendor instance
@@ -119,15 +180,15 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     function Module(name) {
         this.name = name;
-        this.isLoaded = false;
         this.promise = null;
     }
+
     /**
      * Module load
      * @returns {Module}
      * @constructor
      */
-    Module.prototype.load = function Module_load(callback) {
+    Module.prototype._load = function Module_load(callback) {
         var self = this;
         if (!this.promise) {
             this.promise = new Promise(function (resolve) {
@@ -147,7 +208,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.controller = function Module_controller() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_controller_load() {
+        this._load(function Module_controller_load() {
             if (isBOOTSTRAPED) {
                 _$controller.register.apply(_$controller, args);
             } else {
@@ -164,7 +225,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.filter = function Module_filter() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_filter_load() {
+        this._load(function Module_filter_load() {
             if (isBOOTSTRAPED) {
                 _$filter.register.apply(_$controller, args);
             } else {
@@ -180,7 +241,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.directive = function Module_directive() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_directive_load() {
+        this._load(function Module_directive_load() {
             if (isBOOTSTRAPED) {
                 _$compile.directive.apply(_$controller, args);
             } else {
@@ -197,7 +258,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.factory = function Module_factory() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_factory_load() {
+        this._load(function Module_factory_load() {
             if (isBOOTSTRAPED) {
                 _$provide.factory.apply(_$provide, args);
             } else {
@@ -213,7 +274,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.service = function Module_service() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_service_load() {
+        this._load(function Module_service_load() {
             if (isBOOTSTRAPED) {
                 _$provide.service.apply(_$provide, args);
             } else {
@@ -231,7 +292,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.value = function Module_value() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_value_load() {
+        this._load(function Module_value_load() {
             if (isBOOTSTRAPED) {
                 _$provide.value.apply(_$provide, args);
             } else {
@@ -242,7 +303,6 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
     };
 
 
-
     /**
      * Register decorator
      * @returns {Module}
@@ -250,7 +310,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.decorator = function Module_decorator() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_decorator_load() {
+        this._load(function Module_decorator_load() {
             if (isBOOTSTRAPED) {
                 _$provide.decorator.apply(_$provide, args);
             } else {
@@ -268,7 +328,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.constant = function Module_constant() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_constant_load() {
+        this._load(function Module_constant_load() {
             if (isBOOTSTRAPED) {
                 throw new Error('Constant can be registered only before bootstrap');
             } else {
@@ -286,7 +346,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.provider = function Module_provider() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_provider_load() {
+        this._load(function Module_provider_load() {
             if (isBOOTSTRAPED) {
                 throw new Error('Provider can be registered only before bootstrap');
             } else {
@@ -303,7 +363,7 @@ define('ng-bootstrap', ['angularjs'], function (angular) {
      */
     Module.prototype.run = function Module_run() {
         var args = Array.prototype.slice.call(arguments);
-        this.load(function Module_run_load() {
+        this._load(function Module_run_load() {
             if (isBOOTSTRAPED) {
                 _$injector.invoke.apply(_$injector, args);
             } else {

@@ -1,7 +1,7 @@
 {
-  "name": "ng-bootstrap",
+  "name": "at-bootstrap",
   "deps": [
     "angularjs",
-    "ng-router"
+    "at-router"
   ]
 }

@@ -4,15 +4,17 @@
 
 (function () {
 
-    var module = ngAngular.define('ng-router');
+    var module = ngAngular.define('at-router');
     /**
      * Custom modules
      */
-    module.controller('appController', [
+    module.controller('atRouteController', [
         "$scope",
         function (scope) {
-            scope.data = 1;
-
+            scope.component = {
+                name: 'at-login',
+                locals: {}
+            };
         }
     ]);
 

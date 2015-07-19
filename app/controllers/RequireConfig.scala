@@ -17,6 +17,7 @@ import play.api.libs.functional.syntax._
  */
 case class Package(
                     name: String,
+                    controller: Option[String] = null,
                     var isVendor: Option[Boolean] = null,
                     deps: Option[Seq[String]] = null,
                     file: Option[String] = null,
@@ -33,6 +34,7 @@ object RequireConfig extends Controller {
    */
   implicit lazy val packageReads: Reads[Package] = (
     (JsPath \ "name").read[String] and
+      (JsPath \ "controller").readNullable[String] and
       (JsPath \ "isVendor").readNullable[Boolean] and
       (JsPath \ "deps").readNullable[Seq[String]] and
       (JsPath \ "file").readNullable[String] and
@@ -46,6 +48,7 @@ object RequireConfig extends Controller {
    */
   implicit lazy val packageWrites: Writes[Package] = (
     (JsPath \ "name").write[String] and
+      (JsPath \ "controller").writeNullable[String] and
       (JsPath \ "isVendor").writeNullable[Boolean] and
       (JsPath \ "deps").writeNullable[Seq[String]] and
       (JsPath \ "file").writeNullable[String] and

@@ -1,10 +1,12 @@
 @main("Angular AMD") {
-    <div ng-controller="appController" >{{data}}</div>
+    <div ng-controller="atRouteController">
+        <div at-loader="component"></div>
+    </div>
     <script src="@routes.Assets.at("js/vendor/requirejs/require.js")"></script>
     <script>
         require(["@routes.RequireConfig.config()", "@routes.Assets.at("js/package-manager.js")"], function (config, PackageManager) {
             var packageManager = new PackageManager(config);
-            require(['ng-bootstrap'], function (api) {
+            require(['at-bootstrap'], function (api) {
                 api.bootstrap(packageManager);
                 window.ngAngular = api;
             });
