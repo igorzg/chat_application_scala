@@ -19,12 +19,14 @@ define('at-bootstrap', ['angularjs'], function (angular) {
     app = angular.module(APP_NAME, []);
 
 
-    app.config(['$provide', '$compileProvider', '$filterProvider', '$controllerProvider',
-        function ($provide, $compileProvider, $filterProvider, $controllerProvider) {
+    app.config([
+        '$provide', '$compileProvider', '$filterProvider', '$controllerProvider', '$locationProvider',
+        function ($provide, $compileProvider, $filterProvider, $controllerProvider, $locationProvider) {
             _$provide = $provide;
             _$compile = $compileProvider;
             _$filter = $filterProvider;
             _$controller = $controllerProvider;
+            $locationProvider.html5Mode(true);
         }
     ]);
 
@@ -123,7 +125,7 @@ define('at-bootstrap', ['angularjs'], function (angular) {
         /**
          * Get template
          */
-        getController: function getController(name) {
+        getControllerName: function getControllerName(name) {
             var pckg = api.getPackage(name),
                 SNAKE_CASE_REGEXP = /-/g;
 

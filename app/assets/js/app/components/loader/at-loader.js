@@ -41,14 +41,14 @@
             function compile(config, scope, cScope, element) {
                 var name = config.name,
                     templateUrl = ngAngular.getTemplate(name),
-                    controller = ngAngular.getController(name);
+                    controller = ngAngular.getControllerName(name);
 
                 ngAngular.require(name, function atLoaderLoad() {
+                    var link, ctrl;
                     if (templateUrl) {
                         $http.get(templateUrl, {cache: true}).then(function getTemplate(template) {
                             element.html(template.data);
                             createNewScope(function (newScope) {
-                                var link, ctrl;
                                 config.locals.$scope = newScope;
                                 link = $compile(element.contents());
                                 ctrl = $controller(controller, config.locals);
@@ -58,7 +58,12 @@
                             });
                         });
                     } else {
-                        createNewScope();
+                        createNewScope(function (newScope) {
+                            config.locals.$scope = newScope;
+                            ctrl = $controller(controller, config.locals);
+                            element.data('$ngControllerController', ctrl);
+                            element.children().data('$ngControllerController', ctrl);
+                        });
                     }
                 });
 
