@@ -11,11 +11,13 @@ libraryDependencies += specs2 % Test
 libraryDependencies ++= Seq(
   "org.webjars" %% "webjars-play" % "2.4.0-1",
   "org.webjars" % "bootstrap" % "3.1.1-2",
+  "com.typesafe.slick" %% "slick" % "3.0.0",
   "com.typesafe.play" %% "play-slick" % "1.0.0",
-  "com.h2database" % "h2" % "1.4.187" % "test"
+  "com.typesafe.play" %% "play-slick-evolutions" % "1.0.0",
+  "com.h2database" % "h2" % "1.4.187"
 )
 
-libraryDependencies ++= Seq( jdbc, cache, ws )
+libraryDependencies ++= Seq( evolutions, cache, ws )
 includeFilter in (Assets, LessKeys.less) := "*.less"
 
 

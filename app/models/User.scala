@@ -18,11 +18,11 @@ trait UserTable {
 
   import driver.api._
 
-  class UserTable(tag: Tag) extends Table[User](tag, "USER") {
+  class UserTable(tag: Tag) extends Table[User](tag, "User") {
 
-    def user_id = column[Int]("USER_ID", O.PrimaryKey, O.AutoInc)
+    def user_id = column[Int]("user_id", O.PrimaryKey, O.AutoInc)
 
-    def name = column[String]("NAME")
+    def name = column[String]("name")
 
     def * = (user_id, name) <>(User.tupled, User.unapply _)
   }
