@@ -40,7 +40,7 @@ class UserDAO extends UserTable with HasDatabaseConfig[JdbcProfile] {
 
   private val users = TableQuery[UserTable]
 
-  def all(): Future[Seq[User]] = db.run(users.result)
+  def all(): Future[Seq[User]] = db.run(users.result).map(_.toList)
 
   def insert(user: User): Future[Unit] = db.run(users += user).map(_ => ())
 

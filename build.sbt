@@ -14,13 +14,14 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.0.0",
   "com.typesafe.play" %% "play-slick" % "1.0.0",
   "com.typesafe.play" %% "play-slick-evolutions" % "1.0.0",
+  "com.zaxxer" % "HikariCP" % "2.3.7",
   "com.h2database" % "h2" % "1.4.187"
 )
 
-libraryDependencies ++= Seq( evolutions, cache, ws )
-includeFilter in (Assets, LessKeys.less) := "*.less"
+libraryDependencies ++= Seq(evolutions, cache, ws)
+includeFilter in(Assets, LessKeys.less) := "*.less"
 
 
-lazy val `play_angular_amd_scala` = (project in file(".")).enablePlugins(PlayScala,  SbtWeb)
+lazy val `play_angular_amd_scala` = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
-unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
+unmanagedResourceDirectories in Test <+= baseDirectory(_ / "target/web/public/test")
