@@ -79,7 +79,7 @@ object RequireConfig extends Controller {
       paths = paths :+ file
     })
 
-    return paths
+    paths
   }
 
   /**
