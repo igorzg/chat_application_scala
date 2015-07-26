@@ -1,6 +1,7 @@
 {
   "name": "at-router",
   "deps": [
-    "at-loader"
+    "at-loader",
+    "at-transport"
   ]
 }

@@ -9,12 +9,29 @@
      * Custom modules
      */
     module.controller('atRouteController', [
-        "$scope",
-        function (scope) {
+        "$scope", "atTransport",
+        function (scope, atTransport) {
+
             scope.component = {
                 name: 'at-login',
                 locals: {}
             };
+
+            atTransport.isUserLoggedIn().then(null, null, function (data) {
+                if (data.isLoggedIn) {
+                    scope.component = {
+                        name: 'at-user',
+                        locals: {}
+                    };
+                } else {
+                    scope.component = {
+                        name: 'at-login',
+                        locals: {}
+                    };
+                }
+            }).catch(function (error) {
+
+            })
         }
     ]);
 

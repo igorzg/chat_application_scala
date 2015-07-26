@@ -2,6 +2,7 @@
   "name": "at-bootstrap",
   "deps": [
     "angularjs",
-    "at-router"
+    "at-router",
+    "at-transport"
   ]
 }

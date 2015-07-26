@@ -14,6 +14,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.0.0",
   "com.typesafe.play" %% "play-slick" % "1.0.0",
   "com.typesafe.play" %% "play-slick-evolutions" % "1.0.0",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.12",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.3.12",
   "com.zaxxer" % "HikariCP" % "2.3.7",
   "com.h2database" % "h2" % "1.4.187"
 )
