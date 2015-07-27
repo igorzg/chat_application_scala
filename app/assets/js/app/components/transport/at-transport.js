@@ -7,12 +7,28 @@
      * Custom modules
      */
     module.service('atTransport', [
-        "$q", "atLocalEventHandler", "$rootScope",
-        function ($q, events, $rootScope) {
+        "$q", "atLocalEventHandler", "$rootScope", "$timeout",
+        function ($q, events, $rootScope, $timeout) {
             var atTransportSocket = new WebSocket(AT_TRANSPORT_WS_URL),
                 isConnected = false,
                 lazyConnectEvents = [];
 
+            /**
+             * On receive fire event
+             * @param event
+             */
+            atTransportSocket.onclose = function atTransportSocketClose(event) {
+                console.log('close', event);
+                //events.trigger("close", JSON.parse(event.data));
+            };
+
+            /**
+             * On receive fire event
+             * @param event
+             */
+            atTransportSocket.onerror = function atTransportSocketError(event) {
+                events.trigger("error", JSON.parse(event.data));
+            };
             /**
              * On receive fire event
              * @param event
@@ -26,10 +42,8 @@
             atTransportSocket.onopen = function atTransportSocketOpen() {
                 var event;
                 isConnected = true;
-                console.log('transport connected', lazyConnectEvents);
                 while (lazyConnectEvents.length) {
                     event = lazyConnectEvents.shift();
-                    console.log('sending lazy', event);
                     atTransportSocket.send(JSON.stringify(event));
                 }
             };
@@ -44,14 +58,6 @@
                 }
             });
 
-
-
-
-
-
-
-
-
             /**
              * Crete user event
              * @param name
@@ -60,7 +66,11 @@
             function createEvent(name) {
                 return function processEvent(params) {
                     var deferred = $q.defer(),
-                        id = name + "_" + btoa(new Date().getTime() + "_" + Math.random());
+                        id = name + "_" + btoa(new Date().getTime() + "_" + Math.random()),
+                        timeout = $timeout(function () {
+                            deferred.reject("No response from server");
+                            events.remove("receive", receiveEvent);
+                        }, 5000);
 
                     events.trigger("send", {
                         event: name,
@@ -68,14 +78,24 @@
                         params: params || {}
                     });
 
-                    events.add("receive", function (response) {
-                        if (response.event === name && response.id === id) {
-                            deferred.notify(angular.copy(response.data));
-                            $rootScope.$apply();
-                        }
+                    console.log("client_send", {
+                        event: name,
+                        id: id,
+                        params: params || {}
                     });
 
+                    events.add("receive", receiveEvent);
+
                     return deferred.promise;
+
+                    function receiveEvent(response) {
+                        if (response.event === name && response.id === id) {
+                            console.log("client_received", response);
+                            deferred.notify(angular.copy(response.data));
+                            $timeout.cancel(timeout);
+                            $rootScope.$apply();
+                        }
+                    }
                 }
             }
 
@@ -83,7 +103,8 @@
              * Return api
              */
             return {
-                isUserLoggedIn: createEvent("isUserLoggedIn")
+                isUserLoggedIn: createEvent("isUserLoggedIn"),
+                logIn: createEvent("logIn")
             };
         }
     ]);

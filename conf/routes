@@ -14,5 +14,4 @@ GET        /webjars/*file        controllers.WebJarAssets.at(file)
 # JS
 GET        /js-config.js         controllers.RequireConfig.config
 
-GET        /command/:name        controllers.Transport.command(name: String)
-GET        /transport/query      controllers.Transport.transport()
+GET        /transport      controllers.Transport.transport()

@@ -12,15 +12,10 @@
         "$scope", "atTransport",
         function (scope, atTransport) {
 
-            scope.component = {
-                name: 'at-login',
-                locals: {}
-            };
-
             atTransport.isUserLoggedIn().then(null, null, function (data) {
                 if (data.isLoggedIn) {
                     scope.component = {
-                        name: 'at-user',
+                        name: 'at-chat',
                         locals: {}
                     };
                 } else {
@@ -30,17 +25,11 @@
                     };
                 }
             }).catch(function (error) {
-
+                scope.component = {
+                    name: 'at-login',
+                    locals: {}
+                };
             })
         }
     ]);
-
-    module.run([
-        '$q',
-        function ($q) {
-            $q.resolve('test').then(function(data) {
-                console.log(data);
-            });
-        }
-    ])
 }());

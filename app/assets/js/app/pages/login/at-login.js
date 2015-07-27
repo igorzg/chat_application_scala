@@ -6,9 +6,11 @@
     var module = ngAngular.define("at-login");
 
     module.controller('atLogin', [
-        "$scope",
-        function (scope) {
-            scope.test = 1;
+        "$scope", "atTransport",
+        function (scope, atTransport) {
+            scope.login = function login() {
+                atTransport.logIn({nick: scope.nick});
+            };
         }
     ]);
 

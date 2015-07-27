@@ -26,7 +26,9 @@
                     /**
                      * Compile first view
                      */
-                    cScope = compile(scope.atLoader, scope, cScope, element);
+                    if (angular.isObject(scope.atLoader)) {
+                        cScope = compile(scope.atLoader, scope, cScope, element);
+                    }
                 }
             };
 
