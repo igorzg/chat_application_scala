@@ -8,8 +8,15 @@
     module.controller('atLogin', [
         "$scope", "atTransport",
         function (scope, atTransport) {
-            scope.login = function login() {
-                atTransport.logIn({nick: scope.nick});
+            scope.login = function login($event) {
+                if (
+                    ($event.type === "keydown" && $event.keyCode === 13 ) ||
+                    ($event.type === "click")
+                ) {
+                    if (scope.nick && scope.nick.length > 0) {
+                        atTransport.logIn({nick: scope.nick});
+                    }
+                }
             };
         }
     ]);

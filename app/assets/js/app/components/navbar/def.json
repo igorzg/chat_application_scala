@@ -1,0 +1,7 @@
+{
+  "name": "at-nav-bar",
+  "tempalte": "nav-bar.html",
+  "deps": [
+    "at-translate"
+  ]
+}

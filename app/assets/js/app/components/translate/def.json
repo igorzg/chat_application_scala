@@ -1,0 +1,6 @@
+{
+  "name": "at-translate",
+  "deps": [
+    "at-transport"
+  ]
+}

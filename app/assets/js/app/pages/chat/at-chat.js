@@ -6,9 +6,13 @@
     var module = ngAngular.define("at-chat");
 
     module.controller('atChat', [
-        "$scope", "atTransport",
-        function (scope, atTransport) {
-            scope.context = "CHAT";
+        "$scope", "atTransport", "nick",
+        function (scope, atTransport, nick) {
+            scope.navigation = {
+                name: 'at-nav-bar',
+                locals: {}
+            };
+            scope.context = "CHAT user: " + nick;
         }
     ]);
 

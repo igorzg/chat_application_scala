@@ -1,14 +1,14 @@
-package controllers
-
 import play.api._
+import play.api.libs.Codecs._
 import play.api.mvc._
+import play.api.mvc.Results._
+import scala.concurrent.Future
 import play.api.libs.Codecs.sha1
 
-object Application extends Controller {
+object Global extends GlobalSettings {
 
-  val UID = "session_id"
-
-  def index = Action { implicit request =>
+  override def onHandlerNotFound(request: RequestHeader): Future[Result] = {
+    val UID = "session_id"
     val sesionCookie: Option[Cookie] = request.cookies.get(UID)
     var sesion_id : String = null
     if (sesionCookie.isDefined) {
@@ -16,7 +16,6 @@ object Application extends Controller {
     } else {
       sesion_id = sha1(request.session + UID)
     }
-    Ok(views.html.index(request, sesion_id)).withCookies(Cookie("session_id", sesion_id))
+    Future.successful(Ok(views.html.index(request, sesion_id)))
   }
-
 }

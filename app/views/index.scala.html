@@ -1,5 +1,5 @@
 @import play.api.mvc.RequestHeader
-@(implicit request: RequestHeader)
+@(implicit request: RequestHeader, sesion_id: String)
 
 @main("Angular AMD") {
     <div ng-controller="atRouteController">
@@ -8,6 +8,7 @@
     <script src="@routes.Assets.at("js/vendor/requirejs/require.js")"></script>
     <script>
         var AT_TRANSPORT_WS_URL = "@routes.Transport.transport().webSocketURL()";
+        var SESSION_ID = "@sesion_id";
         require(["@routes.RequireConfig.config()", "@routes.Assets.at("js/package-manager.js")"], function (config, PackageManager) {
             var packageManager = new PackageManager(config);
             require(['at-bootstrap'], function (api) {

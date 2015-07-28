@@ -16,7 +16,9 @@
                 if (data.isLoggedIn) {
                     scope.component = {
                         name: 'at-chat',
-                        locals: {}
+                        locals: {
+                            nick: data.name
+                        }
                     };
                 } else {
                     scope.component = {

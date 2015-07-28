@@ -2,15 +2,15 @@
     <div class="panel panel-default mv-login">
         <div class="panel-heading">
             <span class="glyphicon glyphicon-user"></span>
-            Chat example
+            {{ "Chat example" | atTranslate }}
         </div>
         <div class="center-block">
             <div class="form-group">
-                <label>Nickname</label>
-                <input type="text" ng-model="nick" class="form-control"/>
+                <label>{{ "Nickname" | atTranslate }}</label>
+                <input type="text" ng-model="nick" ng-keydown="login($event)" class="form-control"/>
             </div>
             <div class="form-group">
-                <input type="submit" ng-click="login()" value="Lets chat" class="btn btn-primary"/>
+                <input type="submit" ng-click="login($event)"  value="Lets chat" class="btn btn-primary"/>
             </div>
         </div>
     </div>

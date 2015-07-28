@@ -1,20 +1,24 @@
 package controllers
 
-import scala.Left
+import play.Logger
 import scala.Right
 import scala.concurrent.Future
 import play.api.mvc.Controller
 import play.api.Play.current
 import play.api.mvc.WebSocket
+import play.api.libs.json.JsValue
 import actors._
 
 object Transport extends Controller {
 
+  var eventHandler = new EventHandler()
 
-  def transport = WebSocket.tryAcceptWithActor[String, String] { request =>
-    Future.successful(request.session.get("uid") match {
-      case None => Left(Forbidden)
-      case Some(uid) => Right(UserActor.props(uid, request))
-    })
+  /**
+   * Transport socket
+   * @return
+   */
+  def transport = WebSocket.tryAcceptWithActor[JsValue, JsValue] { request =>
+    Logger.info("Events {}", eventHandler.events.toString)
+    Future.successful(Right(TransportActor.props(eventHandler)))
   }
 }

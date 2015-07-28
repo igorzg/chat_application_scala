@@ -1,4 +1,7 @@
 {
   "name": "at-chat",
-  "tempalte": "chat-page.html"
+  "tempalte": "chat-page.html",
+  "deps": [
+    "at-translate"
+  ]
 }

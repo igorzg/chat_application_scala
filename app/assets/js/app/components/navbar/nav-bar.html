@@ -1,0 +1,21 @@
+<nav class="navbar navbar-inverse navbar-collapse">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#collapse-1">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <span class="navbar-brand">{{ "Chat" | atTranslate }}</span>
+    </div>
+    <div class="collapse navbar-collapse" id="collapse-1">
+        <ul class="nav navbar-nav">
+            <li>
+                <a ng-click="logout($event)" href="#">
+                    <span class="glyphicon glyphicon-off"></span>
+                    {{ 'Logout' | atTranslate }}
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+        

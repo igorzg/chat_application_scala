@@ -1,4 +1,7 @@
 {
   "name": "at-login",
-  "tempalte": "login-page.html"
+  "tempalte": "login-page.html",
+  "deps": [
+    "at-translate"
+  ]
 }

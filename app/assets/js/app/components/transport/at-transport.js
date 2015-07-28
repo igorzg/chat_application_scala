@@ -3,6 +3,7 @@
  */
 (function () {
     var module = ngAngular.define('at-transport');
+
     /**
      * Custom modules
      */
@@ -59,37 +60,66 @@
             });
 
             /**
+             * On unload terminate
+             */
+            angular.element(window).bind('unload', function () {
+                events.trigger("send", {
+                    name: "unload",
+                    id: "unload",
+                    terminate: false,
+                    session_id: SESSION_ID,
+                    params: {}
+                });
+            });
+
+            /**
              * Crete user event
              * @param name
              * @returns {*}
              */
             function createEvent(name) {
-                return function processEvent(params) {
+                return function processEvent(params, fireEvents) {
                     var deferred = $q.defer(),
                         id = name + "_" + btoa(new Date().getTime() + "_" + Math.random()),
                         timeout = $timeout(function () {
-                            deferred.reject("No response from server");
+                            deferred.reject("no_response");
                             events.remove("receive", receiveEvent);
                         }, 5000);
 
                     events.trigger("send", {
-                        event: name,
+                        name: name,
                         id: id,
+                        terminate: false,
+                        session_id: SESSION_ID,
                         params: params || {}
                     });
 
                     console.log("client_send", {
-                        event: name,
+                        name: name,
                         id: id,
+                        session_id: SESSION_ID,
                         params: params || {}
                     });
 
                     events.add("receive", receiveEvent);
 
+                    /**
+                     * Terminate event
+                     */
+                    deferred.promise.terminate = function terminate() {
+                        events.trigger("send", {
+                            name: name,
+                            id: id,
+                            terminate: true,
+                            params: {}
+                        });
+                        deferred.reject("terminated");
+                    };
+
                     return deferred.promise;
 
                     function receiveEvent(response) {
-                        if (response.event === name && response.id === id) {
+                        if (response.name === name && response.id === id) {
                             console.log("client_received", response);
                             deferred.notify(angular.copy(response.data));
                             $timeout.cancel(timeout);
@@ -104,7 +134,8 @@
              */
             return {
                 isUserLoggedIn: createEvent("isUserLoggedIn"),
-                logIn: createEvent("logIn")
+                logIn: createEvent("logIn"),
+                logOut: createEvent("logOut")
             };
         }
     ]);
