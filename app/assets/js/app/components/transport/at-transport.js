@@ -135,7 +135,9 @@
             return {
                 isUserLoggedIn: createEvent("isUserLoggedIn"),
                 logIn: createEvent("logIn"),
-                logOut: createEvent("logOut")
+                logOut: createEvent("logOut"),
+                addMessage: createEvent("addMessage"),
+                allMessages: createEvent("allMessages")
             };
         }
     ]);

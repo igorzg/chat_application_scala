@@ -10,7 +10,7 @@ import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Play.current
-import models.{User, UserDAO}
+import models.{User, UserDAO, Message, MessagesDAO}
 
 /**
  * Event
@@ -19,7 +19,12 @@ import models.{User, UserDAO}
  * @param params
  * @param terminate
  */
-case class Event(name: String, id: String, params: JsValue, terminate: Boolean, session_id: String)
+case class Event(name: String,
+                 id: String,
+                 params: JsValue,
+                 terminate: Boolean,
+                 session_id: String,
+                 var out: Option[ActorRef])
 
 /**
  * Event handler
@@ -42,7 +47,25 @@ class EventHandler {
       (JsPath \ "session_id").writeNullable[String]
     )(unlift(User.unapply))
 
+  /**
+   * Lazy reads for recursive package
+   */
+  implicit lazy val messageReads: Reads[Message] = (
+    (JsPath \ "session_id").read[String] and
+      (JsPath \ "user").read[String] and
+      (JsPath \ "message").read[String]
+    )(Message.apply _)
+  /**
+   * Lazy write for recursive package config
+   */
+  implicit lazy val messageWrites: Writes[Message] = (
+    (JsPath \ "session_id").write[String] and
+      (JsPath \ "user").write[String] and
+      (JsPath \ "message").write[String]
+    )(unlift(Message.unapply))
+
   val userDAO: UserDAO = new UserDAO
+  val messageDAO: MessagesDAO = new MessagesDAO
   /**
    * Events list
    */
@@ -84,10 +107,10 @@ class EventHandler {
    * Trigger event by name
    * @param name
    */
-  def broadcast(out: ActorRef, name: String): Unit = {
+  def broadcast(name: String): Unit = {
     events.foreach(item => {
       if (item.name.equals(name)) {
-        handle(out, item)
+        handle(item)
       }
     })
   }
@@ -97,19 +120,19 @@ class EventHandler {
    * Handle event
    * @param e
    */
-  def handle(out: ActorRef, e: Event) = {
+  def handle(e: Event) = {
     if (has(e)) {
       val event = get(e)
       Logger.info("Handle {}", event.toString)
       event.name match {
         case "isUserLoggedIn" => {
-          val f : Future[Seq[User]] = userDAO.getBySessionId(event.session_id)
+          val f: Future[Seq[User]] = userDAO.getBySessionId(event.session_id)
           f onSuccess {
             case u: Seq[User] => {
               Logger.info("Users {}", u.toString)
-              resolveUser(out, event)(u.headOption)
+              resolveUser(event.out.get, event)(u.headOption)
             }
-            case _ => resolveUser(out, event)(null)
+            case _ => resolveUser(event.out.get, event)(null)
           }
         }
         case "logIn" => {
@@ -117,16 +140,34 @@ class EventHandler {
           user.session_id = Option(event.session_id)
           Logger.info("user {}", user)
           userDAO.insert(user) onSuccess {
-            case v: Unit => broadcast(out, "isUserLoggedIn")
+            case v: Unit => broadcast("isUserLoggedIn")
           }
         }
         case "logOut" => {
           userDAO.removeBySessionId(event.session_id) onSuccess {
-            case v : Int => broadcast(out, "isUserLoggedIn")
+            case v: Int => broadcast("isUserLoggedIn")
           }
         }
         case "unload" => {
           userDAO.removeBySessionId(event.session_id)
+        }
+        case "addMessage" => {
+          val message: Message = event.params.as[Message]
+          messageDAO.insert(message) onSuccess {
+            case v: Unit => broadcast("allMessages")
+          }
+        }
+        case "allMessages" => {
+          Logger.info("Broadcast all {}", event.toString)
+          messageDAO.all() onSuccess {
+            case messages: Seq[Message] => {
+              event.out.get ! Json.obj(
+                "name" -> event.name,
+                "id" -> event.id,
+                "data" -> Json.toJson(messages)
+              )
+            }
+          }
         }
       }
     }
@@ -174,13 +215,25 @@ class TransportActor(out: ActorRef, eventHandler: EventHandler) extends Actor wi
   /**
    * Format event
    */
-  implicit val formatReceiveEvent = Json.format[Event]
+  /**
+   * Lazy reads for recursive package
+   */
+  implicit lazy val eventReads: Reads[Event] = (
+    (JsPath \ "name").read[String] and
+      (JsPath \ "id").read[String] and
+      (JsPath \ "params").read[JsValue] and
+      (JsPath \ "terminate").read[Boolean] and
+      (JsPath \ "session_id").read[String] and
+      (JsPath \ "out").readNullable(null)
+    )(Event.apply _)
+
 
   def receive = LoggingReceive {
     case json: JsValue => {
       val event: Event = json.as[Event]
+      event.out = Option(out)
       if (event.name == "unload") {
-        eventHandler.handle(out, event)
+        eventHandler.handle(event)
         eventHandler.clean(event.session_id)
       } else {
         if (event.terminate) {
@@ -188,7 +241,7 @@ class TransportActor(out: ActorRef, eventHandler: EventHandler) extends Actor wi
         } else if (!eventHandler.has(event)) {
           eventHandler.add(event)
         }
-        eventHandler.handle(out, event)
+        eventHandler.handle(event)
       }
 
     }
