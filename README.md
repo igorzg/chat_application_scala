@@ -1,5 +1,5 @@
-# play_angular_amd_scala
-Amd angularjs with scala and event sourcing
+# Scala, play chat application
+Amd angularjs with scala and websockets and cqrs
 
 To run project run in terminal:
 ``` ./activator run ```
