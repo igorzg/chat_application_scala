@@ -14,7 +14,7 @@
                     ($event.type === "click")
                 ) {
                     if (scope.nick && scope.nick.length > 0) {
-                        atTransport.logIn({nick: scope.nick});
+                        atTransport.logIn({name: scope.nick});
                     }
                 }
             };

@@ -3,22 +3,14 @@ package actors
 import akka.actor.{ActorLogging, ActorRef, Actor, Props}
 import akka.event.LoggingReceive
 import play.Logger
-import play.api.libs.json.JsValue
-import play.api.mvc.RequestHeader
-import play.api.mvc.Session
+import scala.concurrent.Future
+import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
+import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Play.current
-import play.api.cache.Cache
-
-
-case class User(nick: String)
-
-object User {
-  implicit val formatUser = Json.format[User]
-}
-
+import models.{User, UserDAO}
 
 /**
  * Event
@@ -29,16 +21,61 @@ object User {
  */
 case class Event(name: String, id: String, params: JsValue, terminate: Boolean, session_id: String)
 
-object Event {
-  implicit val formatReceiveEvent = Json.format[Event]
-}
-
 /**
  * Event handler
  */
-class EventHandler() {
+class EventHandler {
+  /**
+   * Lazy reads for recursive package
+   */
+  implicit lazy val userReads: Reads[User] = (
+    (JsPath \ "user_id").readNullable[Int] and
+      (JsPath \ "name").read[String] and
+      (JsPath \ "session_id").readNullable[String]
+    )(User.apply _)
+  /**
+   * Lazy write for recursive package config
+   */
+  implicit lazy val userWrites: Writes[User] = (
+    (JsPath \ "name").writeNullable[Int] and
+      (JsPath \ "name").write[String] and
+      (JsPath \ "session_id").writeNullable[String]
+    )(unlift(User.unapply))
+
+  val userDAO: UserDAO = new UserDAO
+  /**
+   * Events list
+   */
   var events: Array[Event] = Array()
 
+
+  /**
+   * Resolve user
+   * @param out actor reference
+   * @param event client event
+   * @param user user record
+   * @return
+   */
+  def resolveUser(out: ActorRef, event: Event)(user: Option[User]) = {
+    var name: String = null
+    if (user.isDefined) {
+      name = user.get.name
+    }
+    out ! Json.obj(
+      "name" -> event.name,
+      "id" -> event.id,
+      "data" -> Json.obj(
+        "isLoggedIn" -> user.isDefined,
+        "name" -> name
+      )
+    )
+  }
+
+
+  /**
+   * Add an event
+   * @param event
+   */
   def add(event: Event) = {
     events = events :+ event
   }
@@ -47,13 +84,14 @@ class EventHandler() {
    * Trigger event by name
    * @param name
    */
-  def trigger(out: ActorRef, name: String): Unit = {
+  def broadcast(out: ActorRef, name: String): Unit = {
     events.foreach(item => {
       if (item.name.equals(name)) {
         handle(out, item)
       }
     })
   }
+
 
   /**
    * Handle event
@@ -65,25 +103,30 @@ class EventHandler() {
       Logger.info("Handle {}", event.toString)
       event.name match {
         case "isUserLoggedIn" => {
-          val nick: Option[String] = Cache.getAs[String](event.session_id + "_nick")
-          val value: JsValue = Json.obj(
-            "name" -> event.name,
-            "id" -> event.id,
-            "data" -> Json.obj(
-              "isLoggedIn" -> nick.isDefined,
-              "name" -> nick.getOrElse(null)
-            )
-          )
-          out ! value
+          val f : Future[Seq[User]] = userDAO.getBySessionId(event.session_id)
+          f onSuccess {
+            case u: Seq[User] => {
+              Logger.info("Users {}", u.toString)
+              resolveUser(out, event)(u.headOption)
+            }
+            case _ => resolveUser(out, event)(null)
+          }
         }
         case "logIn" => {
-          val u: User = event.params.as[User]
-          Cache.set(event.session_id + "_nick", u.nick);
-          trigger(out, "isUserLoggedIn")
+          val user: User = event.params.as[User]
+          user.session_id = Option(event.session_id)
+          Logger.info("user {}", user)
+          userDAO.insert(user) onSuccess {
+            case v: Unit => broadcast(out, "isUserLoggedIn")
+          }
         }
         case "logOut" => {
-          Cache.remove(event.session_id + "_nick")
-          trigger(out, "isUserLoggedIn")
+          userDAO.removeBySessionId(event.session_id) onSuccess {
+            case v : Int => broadcast(out, "isUserLoggedIn")
+          }
+        }
+        case "unload" => {
+          userDAO.removeBySessionId(event.session_id)
         }
       }
     }
@@ -96,6 +139,7 @@ class EventHandler() {
   def clean(session_id: String) = {
     events.filterNot(elm => elm.session_id == session_id)
   }
+
   /**
    * Has event
    * @param e
@@ -127,11 +171,16 @@ class EventHandler() {
  * @param eventHandler
  */
 class TransportActor(out: ActorRef, eventHandler: EventHandler) extends Actor with ActorLogging {
+  /**
+   * Format event
+   */
+  implicit val formatReceiveEvent = Json.format[Event]
 
   def receive = LoggingReceive {
     case json: JsValue => {
       val event: Event = json.as[Event]
       if (event.name == "unload") {
+        eventHandler.handle(out, event)
         eventHandler.clean(event.session_id)
       } else {
         if (event.terminate) {
